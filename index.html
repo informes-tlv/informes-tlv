@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Televalentin — Formularios de Trabajo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; overflow-x: hidden; }
+        .container { max-width: 860px; margin: 0 auto; background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); overflow: hidden; width: 100%; }
+
+        /* HEADER */
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; }
+        .header h1 { font-size: 26px; margin-bottom: 6px; }
+        .header p  { font-size: 14px; opacity: 0.85; }
+
+        /* SELECTOR DE TIPO */
+        .tipo-selector-bar { background: #f0f2ff; border-bottom: 2px solid #dee2e6; padding: 18px 30px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+        .tipo-selector-bar label { font-weight: 700; color: #667eea; font-size: 15px; white-space: nowrap; }
+        .tipo-selector-bar select { padding: 11px 16px; border: 2px solid #667eea; border-radius: 30px; font-size: 15px; font-weight: 600; color: #4a4a6a; background: white; cursor: pointer; flex: 1; min-width: 220px; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23667eea' d='M6 8L0 0h12z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; padding-right: 40px; }
+        .tipo-selector-bar select:focus { outline: none; box-shadow: 0 0 0 3px rgba(102,126,234,0.25); }
+
+        /* SECCIONES DE FORMULARIO */
+        .form-section { display: none; }
+        .form-section.active { display: block; }
+        .content { padding: 30px; }
+
+        /* COMPONENTES COMUNES */
+        .section { background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 25px; border-left: 4px solid #667eea; }
+        .section h3 { color: #667eea; font-size: 16px; margin-bottom: 16px; }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; margin-bottom: 7px; color: #495057; font-weight: 500; font-size: 14px; }
+        label.required::after { content: " *"; color: #dc3545; }
+        input[type="text"], input[type="date"], input[type="time"], select, textarea { width: 100%; padding: 11px 13px; border: 2px solid #dee2e6; border-radius: 8px; font-size: 14px; transition: border-color 0.3s; background: white; }
+        input[type="text"]:focus, input[type="date"]:focus, input[type="time"]:focus, select:focus, textarea:focus { outline: none; border-color: #667eea; }
+        textarea { resize: vertical; min-height: 80px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+        /* CABLES */
+        .cable-row { background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 14px; }
+        .cable-row.entrada { border-left: 4px solid #28a745; }
+        .cable-row.salida  { border-left: 4px solid #667eea; }
+        .cable-badge { font-weight: 700; font-size: 13px; color: #495057; white-space: nowrap; min-width: 110px; }
+        .cable-row input { flex: 1; margin: 0; }
+
+        /* PUERTOS */
+        #cert-puertos-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+        .puerto-item { background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 12px; }
+        .puerto-label { font-weight: 600; color: #764ba2; font-size: 13px; margin-bottom: 6px; }
+
+        /* FOTOS */
+        .foto-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        .foto-item { background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+        .foto-item > label { font-size: 13px; font-weight: 600; color: #495057; margin-bottom: 0; min-width: 200px; flex-shrink: 0; }
+        .foto-controls { display: flex; gap: 8px; align-items: center; flex: 1; flex-wrap: wrap; }
+        .btn-file   { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: #f0f2ff; border: 2px solid #667eea; border-radius: 20px; color: #667eea; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .btn-file:hover { background: #667eea; color: white; }
+        .btn-camera { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: #f0fff4; border: 2px solid #28a745; border-radius: 20px; color: #28a745; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .btn-camera:hover { background: #28a745; color: white; }
+        input.hidden-file { display: none; }
+        .photo-preview { width: 64px; height: 64px; object-fit: cover; border-radius: 6px; border: 1px solid #dee2e6; display: none; flex-shrink: 0; }
+
+        /* FOTOS ADICIONALES */
+        .additional-photos { background: #f8f9fa; border-radius: 10px; padding: 20px; margin-top: 10px; }
+        .additional-photos h3 { color: #495057; font-size: 15px; margin-bottom: 14px; }
+        .additional-photo-item { background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+        .additional-photo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+
+        /* BOTONES */
+        .btn { padding: 11px 26px; border: none; border-radius: 25px; font-size: 15px; cursor: pointer; transition: all 0.3s; font-weight: 500; }
+        .btn-primary   { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102,126,234,0.4); }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-secondary:hover { background: #5a6268; }
+        .btn-danger    { background: #dc3545; color: white; padding: 7px 14px; font-size: 13px; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-outline   { background: transparent; border: 2px solid #667eea; color: #667eea; padding: 9px 22px; }
+        .btn-outline:hover { background: #667eea; color: white; }
+        .button-group  { text-align: center; margin-top: 30px; display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
+
+        /* TOAST */
+        #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(120px); padding: 14px 28px; border-radius: 30px; font-size: 14px; font-weight: 600; z-index: 9999; transition: transform 0.4s ease; white-space: nowrap; color: white; background: #333; pointer-events: none; }
+        #toast.show    { transform: translateX(-50%) translateY(0); }
+        #toast.success { background: #28a745; }
+        #toast.error   { background: #dc3545; }
+        #toast.info    { background: #667eea; }
+
+        /* TABLET */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .header { padding: 20px 15px; }
+            .header h1 { font-size: 20px; }
+            .content { padding: 16px; }
+            .grid-2 { grid-template-columns: 1fr; }
+            #cert-puertos-container { grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); }
+            .button-group { flex-direction: column; align-items: stretch; }
+            .button-group .btn { width: 100%; text-align: center; }
+            .section { padding: 14px; }
+            .tipo-selector-bar { padding: 14px 16px; }
+        }
+
+        /* MOBILE */
+        @media (max-width: 480px) {
+            body { padding: 0; }
+            .container { border-radius: 0; box-shadow: none; }
+            .header { padding: 16px 12px; }
+            .header h1 { font-size: 17px; }
+            .header p  { font-size: 12px; }
+            .content { padding: 12px; }
+            .section { padding: 12px 10px; margin-bottom: 16px; }
+            .section h3 { font-size: 14px; }
+            input[type="text"], input[type="date"], select, textarea { padding: 10px; font-size: 15px; }
+            .cable-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .cable-badge { min-width: unset; }
+            .foto-item { flex-direction: column; align-items: flex-start; }
+            .foto-item > label { min-width: unset; }
+            .photo-preview { width: 100%; height: 120px; }
+            #cert-puertos-container { grid-template-columns: 1fr 1fr; }
+            .btn { font-size: 15px; padding: 13px 20px; border-radius: 10px; }
+            .additional-photos { padding: 12px; }
+            .tipo-selector-bar { padding: 12px; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+<div id="toast"></div>
+<div class="container">
+
+    <div class="header">
+        <h1>📡 Televalentin</h1>
+        <p>Informes de trabajo</p>
+    </div>
+
+    <!-- SELECTOR TIPO DE TRABAJO -->
+    <div class="tipo-selector-bar">
+        <label for="tipoTrabajo">🗂️ Tipo de trabajo:</label>
+        <select id="tipoTrabajo" onchange="cambiarSeccion()">
+            <option value="">— Seleccionar tipo de trabajo —</option>
+            <option value="instalacion">🔧 Instalación de Fibra Optica</option>
+            <option value="wimax">📡 Instalación de WIMAX</option>
+            <option value="seguridad">🔒 Instalación de Seguridad</option>
+            <option value="averia">⚠️ Avería</option>
+            <option value="general">📋 Trabajo General</option>
+            <option value="certificacion">📡 Certificación CTO</option>
+        </select>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         1. INSTALACIÓN DE FIBRA ÓPTICA
+    ══════════════════════════════════════════════════════ -->
+    <div id="sec-instalacion" class="form-section">
+        <div class="content">
+
+            <div class="section">
+                <h3>📋 Datos Generales</h3>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="required" for="ins-fecha">Fecha</label>
+                        <input type="date" id="ins-fecha">
+                    </div>
+                    <div class="form-group">
+                        <label for="ins-hora">Hora</label>
+                        <input type="time" id="ins-hora">
+                    </div>
+                    <div class="form-group">
+                        <label class="required" for="ins-tecnicos">Técnicos que ejecutan el trabajo</label>
+                        <input type="text" id="ins-tecnicos" placeholder="Nombre(s) del técnico/s">
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="required" for="ins-direccion">Dirección o coordenadas de instalación</label>
+                        <input type="text" id="ins-direccion" placeholder="Calle, número, municipio o coordenadas…">
+                    </div>
+                    <div class="form-group">
+                        <label for="ins-metros">Metros de acometida</label>
+                        <input type="text" id="ins-metros" placeholder="Ej: 12,5 m">
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="ins-codigoCTO">Código de CTO</label>
+                        <input type="text" id="ins-codigoCTO" placeholder="Ej: CTO-MAD-0001">
+                    </div>
+                    <div class="form-group">
+                        <label for="ins-puertoCTO">Puerto de CTO</label>
+                        <input type="text" id="ins-puertoCTO" placeholder="Ej: Puerto 3">
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="ins-tv">Instalación de televisión</label>
+                        <select id="ins-tv" onchange="actualizarFotosTV('ins')">
+                            <option value="">— Seleccionar —</option>
+                            <option value="si-catv">Sí, CATV</option>
+                            <option value="si-stb-zapi">Sí, STB ZAPI</option>
+                            <option value="si-app-zapi">Sí, APP ZAPI</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="ins-telefono">Instalación de teléfono</label>
+                        <select id="ins-telefono">
+                            <option value="">— Seleccionar —</option>
+                            <option value="si">Sí</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="ins-comentarios">Comentarios sobre la instalación</label>
+                    <textarea id="ins-comentarios" placeholder="Observaciones, incidencias, notas…"></textarea>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>📷 Fotografías</h3>
+                <div class="foto-grid">
+                    <div class="foto-item">
+                        <label>Foto etiqueta CTO</label>
+                        <div class="foto-controls">
+                            <label class="btn-file" for="ins-file-etiq-cto">📁 Seleccionar</label>
+                            <input class="hidden-file" type="file" id="ins-file-etiq-cto" accept="image/*" onchange="previewImage(this,'ins-prev-etiq-cto')">
+                            <label class="btn-camera" for="ins-cam-etiq-cto">📷 Cámara</label>
+                            <input class="hidden-file" type="file" id="ins-cam-etiq-cto" accept="image/*" capture="environment" onchange="previewImage(this,'ins-prev-etiq-cto')">
+                        </div>
+                        <img id="ins-prev-etiq-cto" class="photo-preview">
+                    </div>
+                    <div class="foto-item">
+                        <label>Foto medición puerto CTO</label>
+                        <div class="foto-controls">
+                            <label class="btn-file" for="ins-file-med-cto">📁 Seleccionar</label>
+                            <input class="hidden-file" type="file" id="ins-file-med-cto" accept="image/*" onchange="previewImage(this,'ins-prev-med-cto')">
+                            <label class="btn-camera" for="ins-cam-med-cto">📷 Cámara</label>
+                            <input class="hidden-file" type="file" id="ins-cam-med-cto" accept="image/*" capture="environment" onchange="previewImage(this,'ins-prev-med-cto')">
+                        </div>
+                        <img id="ins-prev-med-cto" class="photo-preview">
+                    </div>
+                    <div class="foto-item">
+                        <label>Foto cliente marcado en CTO</label>
+                        <div class="foto-controls">
+                            <label class="btn-file" for="ins-file-cli-cto">📁 Seleccionar</label>
+                            <input class="hidden-file" type="file" id="ins-file-cli-cto" accept="image/*" onchange="previewImage(this,'ins-prev-cli-cto')">
+                            <label class="btn-camera" for="ins-cam-cli-cto">📷 Cámara</label>
+                            <input class="hidden-file" type="file" id="ins-cam-cli-cto" accept="image/*" capture="environment" onchange="previewImage(this,'ins-prev-cli-cto')">
+                        </div>
+                        <img id="ins-prev-cli-cto" class="photo-preview">
+                    </div>
+                    <div class="foto-item">
+                        <label>Foto fusión roseta abierta</label>
+                        <div class="foto-controls">
+                            <label class="btn-file" for="ins-file-fusion">📁 Seleccionar</label>
+                            <input class="hidden-file" type="file" id="ins-file-fusion" accept="image/*" onchange="previewImage(this,'ins-prev-fusion')">
+                            <label class="btn-camera" for="ins-cam-fusion">📷 Cámara</label>
+                            <input class="hidden-file" type="file" id="ins-cam-fusion" accept="image/*" capture="environment" onchange="previewImage(this,'ins-prev-fusion')">
+                        </div>
+                        <img id="ins-prev-fusion" class="photo-preview">
+                    </div>
+                    <div class="foto-item">
+                        <label>Foto ubicación roseta</label>
+                        <div class="foto-controls">
+                            <label class="btn-file" for="ins-file-ubic-roseta">📁 Seleccionar</label>
+                            <input class="hidden-file" type="file" id="ins-file-ubic-roseta" accept="image/*" onchange="previewImage(this,'ins-prev-ubic-roseta')">
+                            <label class="btn-camera" for="ins-cam-ubic-roseta">📷 Cámara</label>
+                            <input class="hidden-file" type="file" id="ins-cam-ubic-roseta" accept="image/*" capture="environment" onchange="previewImage(this,'ins-prev-ubic-roseta')">
+                        </div>
+                        <img id="ins-prev-ubic-roseta" class="photo-preview">
+                    </div>
+                    <div class="foto-item">
+                        <label>Foto medición roseta</label>
+                        <div class="foto-controls">
+                            <label class="btn-file" for="ins-file-med-roseta">📁 Seleccionar</label>
+                            <input class="hidden-file" type="file" id="ins-file-med-roseta" accept="image/*" onchange="previewImage(this,'ins-prev-med-roseta')">
+                            <label class="btn-camera" for="ins-cam-med-roseta">📷 Cámara</label>
+                            <input class="hidden-file" type="file" id="ins-cam-med-roseta" accept="image/*" capture="environment" onchange="previewImage(this,'ins-prev-med-roseta')">
+                        </div>
+                        <img id="ins-prev-med-roseta" class="photo-preview">
+                    </div>
+                    <div class="foto-item">
+                        <label>Foto ubicación ONT</label>
+                        <div class="foto-controls">
+                            <label class="btn-file" for="ins-file-ubic-ont">📁 Seleccionar</label>
+                            <input class="hidden-file" type="file" id="ins-file-ubic-ont" accept="image/*" onchange="previewImage(this,'ins-prev-ubic-ont')">
+                            <label class="btn-camera" for="ins-cam-ubic-ont">📷 Cámara</label>
+                            <input class="hidden-file" type="file" id="ins-cam-ubic-ont" accept="image/*" capture="environment" onchange="previewImage(this,'ins-prev-ubic-ont')">
+                        </div>
+                        <img id="ins-prev-ubic-ont" class="photo-preview">
+                    </div>
+                    <div class="foto-item">
+                        <label>Foto puertos ONT</label>
+                        <div class="foto-controls">
+                            <label class="btn-file" for="ins-file-ont-puertos">📁 Seleccionar</label>
+                            <input class="hidden-file" type="file" id="ins-file-ont-puertos" accept="image/*" onchange="previewImage(this,'ins-prev-ont-puertos')">
+                            <label class="btn-camera" for="ins-cam-ont-puertos">📷 Cámara</label>
+                            <input class="hidden-file" type="file" id="ins-cam-ont-puertos" accept="image/*" capture="environment" onchange="previewImage(this,'ins-prev-ont-puertos')">
+                        </div>
+                        <img id="ins-prev-ont-puertos" class="photo-preview">
+                    </div>
+                    <div class="foto-item">
+                        <label>Foto etiqueta ONT</label>
+                        <div class="foto-controls">
+                            <label class="btn-file" for="ins-file-ont-etiq">📁 Seleccionar</label>
+                            <input class="hidden-file" type="file" id="ins-file-ont-etiq" accept="image/*" onchange="previewImage(this,'ins-prev-ont-etiq')">
+                            <label class="btn-camera" for="ins-cam-ont-etiq">📷 Cámara</label>
+                            <input class="hidden-file" type="file" id="ins-cam-ont-etiq" accept="image/*" capture="environment" onchange="previewImage(this,'ins-prev-ont-etiq')">
+                        </div>
+                        <img id="ins-prev-ont-etiq" class="photo-preview">
+                    </div>
+                    <!-- Fotos condicionales TV -->
+                    <div id="ins-fotos-catv" style="display:none; flex-direction:column; gap:12px;">
+                        <div class="foto-item">
+                            <label>Foto conversor CATV</label>
+                            <div class="foto-controls">
+                                <label class="btn-file" for="ins-file-conv-catv">📁 Seleccionar</label>
+                                <input class="hidden-file" type="file" id="ins-file-conv-catv" accept="image/*" onchange="previewImage(this,'ins-prev-conv-catv')">
+                                <label class="btn-camera" for="ins-cam-conv-catv">📷 Cámara</label>
+                                <input class="hidden-file" type="file" id="ins-cam-conv-catv" accept="image/*" capture="environment" onchange="previewImage(this,'ins-prev-conv-catv')">
+                            </div>
+                            <img id="ins-prev-conv-catv" class="photo-preview">
+                        </div>
+                        <div class="foto-item">
+                            <label>Foto etiqueta conversor CATV</label>
+                            <div class="foto-controls">
+                                <label class="btn-file" for="ins-file-etiq-catv">📁 Seleccionar</label>
+                                <input class="hidden-file" type="file" id="ins-file-etiq-catv" accept="image/*" onchange="previewImage(this,'ins-prev-etiq-catv')">
+                                <label class="btn-camera" for="ins-cam-etiq-catv">📷 Cámara</label>
+                                <input class="hidden-file" type="file" id="ins-cam-etiq-catv" accept="image/*" capture="environment" onchange="previewImage(this,'ins-prev-etiq-catv')">
+                            </div>
+                            <img id="ins-prev-etiq-catv" class="photo-preview">
+                        </div>
+                    </div>
+                    <div id="ins-fotos-stb-zapi" style="display:none; flex-direction:column; gap:12px;">
+                        <div class="foto-item">
+                            <label>Foto STB Zapi</label>
+                            <div class="foto-controls">
+                                <label class="btn-file" for="ins-file-stb-zapi">📁 Seleccionar</label>
+                                <input class="hidden-file" type="file" id="ins-file-stb-zapi" accept="image/*" onchange="previewImage(this,'ins-prev-stb-zapi')">
+                                <label class="btn-camera" for="ins-cam-stb-zapi">📷 Cámara</label>
+                                <input class="hidden-file" type="file" id="ins-cam-stb-zapi" accept="image/*" capture="environment" onchange="previewImage(this,'ins-prev-stb-zapi')">
+                            </div>
+                            <img id="ins-prev-stb-zapi" class="photo-preview">
+                        </div>
+                        <div class="foto-item">
+                            <label>Foto etiqueta STB Zapi</label>
+                            <div class="foto-controls">
+                                <label class="btn-file" for="ins-file-etiq-stb-zapi">📁 Seleccionar</label>
+                                <input class="hidden-file" type="file" id="ins-file-etiq-stb-zapi" accept="image/*" onchange="previewImage(this,'ins-prev-etiq-stb-zapi')">
+                                <label class="btn-camera" for="ins-cam-etiq-stb-zapi">📷 Cámara</label>
+                                <input class="hidden-file" type="file" id="ins-cam-etiq-stb-zapi" accept="image/*" capture="environment" onchange="previewImage(this,'ins-prev-etiq-stb-zapi')">
+                            </div>
+                            <img id="ins-prev-etiq-stb-zapi" class="photo-preview">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="additional-photos" style="margin-top:20px;">
+                    <h3>📎 Fotos Complementarias</h3>
+                    <div id="ins-additionalPhotos"></div>
+                    <button class="btn btn-secondary" onclick="addAdditionalPhoto('ins')" style="margin-top:6px;">+ Añadir foto complementaria</button>
+                </div>
+            </div>
+
+            <div class="button-group">
+
+                <button class="btn btn-primary" onclick="generarPDF('ins')">📄 Generar informe PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         2. INSTALACIÓN DE WIMAX
+    ══════════════════════════════════════════════════════ -->
+    <div id="sec-wimax" class="form-section">
+        <div class="content">
+
+            <div class="section">
+                <h3>📋 Datos Generales</h3>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="required" for="wim-fecha">Fecha</label>
+                        <input type="date" id="wim-fecha">
+                    </div>
+                    <div class="form-group">
+                        <label for="wim-hora">Hora</label>
+                        <input type="time" id="wim-hora">
+                    </div>
+                    <div class="form-group">
+                        <label class="required" for="wim-tecnicos">Técnicos que ejecutan el trabajo</label>
+                        <input type="text" id="wim-tecnicos" placeholder="Nombre(s) del técnico/s">
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="required" for="wim-direccion">Dirección o coordenadas de instalación</label>
+                        <input type="text" id="wim-direccion" placeholder="Calle, número, municipio o coordenadas…">
+                    </div>
+                    <div class="form-group">
+                        <label for="wim-metros">Metros de cable RJ45</label>
+                        <input type="text" id="wim-metros" placeholder="Ej: 15 m">
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="wim-tv">Instalación de televisión</label>
+                        <select id="wim-tv" onchange="actualizarFotosTV('wim')">
+                            <option value="">— Seleccionar —</option>
+                            <option value="si-stb-zapi">Sí, STB ZAPI</option>
+                            <option value="si-app-zapi">Sí, APP ZAPI</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="wim-telefono">Instalación de teléfono</label>
+                        <select id="wim-telefono" onchange="actualizarFotosTelefono('wim')">
+                            <option value="">— Seleccionar —</option>
+                            <option value="si">Sí</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="wim-comentarios">Comentarios sobre la instalación</label>
+                    <textarea id="wim-comentarios" placeholder="Observaciones, incidencias, notas…"></textarea>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>📷 Fotografías</h3>
+                <div class="foto-grid">
+                    <div class="foto-item">
+                        <label>Foto antena instalada</label>
+                        <div class="foto-controls">
+                            <label class="btn-file" for="wim-file-antena">📁 Seleccionar</label>
+                            <input class="hidden-file" type="file" id="wim-file-antena" accept="image/*" onchange="previewImage(this,'wim-prev-antena')">
+                            <label class="btn-camera" for="wim-cam-antena">📷 Cámara</label>
+                            <input class="hidden-file" type="file" id="wim-cam-antena" accept="image/*" capture="environment" onchange="previewImage(this,'wim-prev-antena')">
+                        </div>
+                        <img id="wim-prev-antena" class="photo-preview">
+                    </div>
+                    <div class="foto-item">
+                        <label>Foto ubicación router</label>
+                        <div class="foto-controls">
+                            <label class="btn-file" for="wim-file-ubic-router">📁 Seleccionar</label>
+                            <input class="hidden-file" type="file" id="wim-file-ubic-router" accept="image/*" onchange="previewImage(this,'wim-prev-ubic-router')">
+                            <label class="btn-camera" for="wim-cam-ubic-router">📷 Cámara</label>
+                            <input class="hidden-file" type="file" id="wim-cam-ubic-router" accept="image/*" capture="environment" onchange="previewImage(this,'wim-prev-ubic-router')">
+                        </div>
+                        <img id="wim-prev-ubic-router" class="photo-preview">
+                    </div>
+                    <div class="foto-item">
+                        <label>Foto puertos router</label>
+                        <div class="foto-controls">
+                            <label class="btn-file" for="wim-file-puertos-router">📁 Seleccionar</label>
+                            <input class="hidden-file" type="file" id="wim-file-puertos-router" accept="image/*" onchange="previewImage(this,'wim-prev-puertos-router')">
+                            <label class="btn-camera" for="wim-cam-puertos-router">📷 Cámara</label>
+                            <input class="hidden-file" type="file" id="wim-cam-puertos-router" accept="image/*" capture="environment" onchange="previewImage(this,'wim-prev-puertos-router')">
+                        </div>
+                        <img id="wim-prev-puertos-router" class="photo-preview">
+                    </div>
+                    <div class="foto-item">
+                        <label>Foto etiqueta router</label>
+                        <div class="foto-controls">
+                            <label class="btn-file" for="wim-file-etiq-router">📁 Seleccionar</label>
+                            <input class="hidden-file" type="file" id="wim-file-etiq-router" accept="image/*" onchange="previewImage(this,'wim-prev-etiq-router')">
+                            <label class="btn-camera" for="wim-cam-etiq-router">📷 Cámara</label>
+                            <input class="hidden-file" type="file" id="wim-cam-etiq-router" accept="image/*" capture="environment" onchange="previewImage(this,'wim-prev-etiq-router')">
+                        </div>
+                        <img id="wim-prev-etiq-router" class="photo-preview">
+                    </div>
+                    <!-- Fotos condicionales TV -->
+                    <div id="wim-fotos-stb-zapi" style="display:none; flex-direction:column; gap:12px;">
+                        <div class="foto-item">
+                            <label>Foto STB Zapi</label>
+                            <div class="foto-controls">
+                                <label class="btn-file" for="wim-file-stb-zapi">📁 Seleccionar</label>
+                                <input class="hidden-file" type="file" id="wim-file-stb-zapi" accept="image/*" onchange="previewImage(this,'wim-prev-stb-zapi')">
+                                <label class="btn-camera" for="wim-cam-stb-zapi">📷 Cámara</label>
+                                <input class="hidden-file" type="file" id="wim-cam-stb-zapi" accept="image/*" capture="environment" onchange="previewImage(this,'wim-prev-stb-zapi')">
+                            </div>
+                            <img id="wim-prev-stb-zapi" class="photo-preview">
+                        </div>
+                        <div class="foto-item">
+                            <label>Foto etiqueta STB Zapi</label>
+                            <div class="foto-controls">
+                                <label class="btn-file" for="wim-file-etiq-stb-zapi">📁 Seleccionar</label>
+                                <input class="hidden-file" type="file" id="wim-file-etiq-stb-zapi" accept="image/*" onchange="previewImage(this,'wim-prev-etiq-stb-zapi')">
+                                <label class="btn-camera" for="wim-cam-etiq-stb-zapi">📷 Cámara</label>
+                                <input class="hidden-file" type="file" id="wim-cam-etiq-stb-zapi" accept="image/*" capture="environment" onchange="previewImage(this,'wim-prev-etiq-stb-zapi')">
+                            </div>
+                            <img id="wim-prev-etiq-stb-zapi" class="photo-preview">
+                        </div>
+                    </div>
+                    <!-- Fotos condicionales Teléfono -->
+                    <div id="wim-fotos-telefono" style="display:none; flex-direction:column; gap:12px;">
+                        <div class="foto-item">
+                            <label>Foto ATA telefonía</label>
+                            <div class="foto-controls">
+                                <label class="btn-file" for="wim-file-ata">📁 Seleccionar</label>
+                                <input class="hidden-file" type="file" id="wim-file-ata" accept="image/*" onchange="previewImage(this,'wim-prev-ata')">
+                                <label class="btn-camera" for="wim-cam-ata">📷 Cámara</label>
+                                <input class="hidden-file" type="file" id="wim-cam-ata" accept="image/*" capture="environment" onchange="previewImage(this,'wim-prev-ata')">
+                            </div>
+                            <img id="wim-prev-ata" class="photo-preview">
+                        </div>
+                        <div class="foto-item">
+                            <label>Foto etiqueta ATA telefonía</label>
+                            <div class="foto-controls">
+                                <label class="btn-file" for="wim-file-etiq-ata">📁 Seleccionar</label>
+                                <input class="hidden-file" type="file" id="wim-file-etiq-ata" accept="image/*" onchange="previewImage(this,'wim-prev-etiq-ata')">
+                                <label class="btn-camera" for="wim-cam-etiq-ata">📷 Cámara</label>
+                                <input class="hidden-file" type="file" id="wim-cam-etiq-ata" accept="image/*" capture="environment" onchange="previewImage(this,'wim-prev-etiq-ata')">
+                            </div>
+                            <img id="wim-prev-etiq-ata" class="photo-preview">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="additional-photos" style="margin-top:20px;">
+                    <h3>📎 Fotos Complementarias</h3>
+                    <div id="wim-additionalPhotos"></div>
+                    <button class="btn btn-secondary" onclick="addAdditionalPhoto('wim')" style="margin-top:6px;">+ Añadir foto complementaria</button>
+                </div>
+            </div>
+
+            <div class="button-group">
+
+                <button class="btn btn-primary" onclick="generarPDF('wim')">📄 Generar informe PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         3. INSTALACIÓN DE SEGURIDAD
+    ══════════════════════════════════════════════════════ -->
+    <div id="sec-seguridad" class="form-section">
+        <div class="content">
+
+            <div class="section">
+                <h3>📋 Datos Generales</h3>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="required" for="seg-fecha">Fecha</label>
+                        <input type="date" id="seg-fecha">
+                    </div>
+                    <div class="form-group">
+                        <label for="seg-hora">Hora</label>
+                        <input type="time" id="seg-hora">
+                    </div>
+                    <div class="form-group">
+                        <label class="required" for="seg-tecnicos">Técnicos que ejecutan el trabajo</label>
+                        <input type="text" id="seg-tecnicos" placeholder="Nombre(s) del técnico/s">
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="required" for="seg-direccion">Dirección o coordenadas de instalación</label>
+                        <input type="text" id="seg-direccion" placeholder="Calle, número, municipio o coordenadas…">
+                    </div>
+                    <div class="form-group">
+                        <label for="seg-metros">Metros de cable RJ45</label>
+                        <input type="text" id="seg-metros" placeholder="Ej: 20 m">
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="seg-tipo">Tipo de instalación</label>
+                        <select id="seg-tipo">
+                            <option value="">— Seleccionar —</option>
+                            <option value="camaras">Cámaras</option>
+                            <option value="alarma">Alarma</option>
+                            <option value="camaras-alarma">Cámaras y alarma</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="seg-comentarios">Comentarios sobre la instalación</label>
+                        <textarea id="seg-comentarios" placeholder="Observaciones, incidencias, notas…" style="min-height:60px;"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>📷 Fotografías</h3>
+                <div class="additional-photos" style="margin-top:0;">
+                    <h3>📎 Añadir fotos de la instalación</h3>
+                    <div id="seg-additionalPhotos"></div>
+                    <button class="btn btn-secondary" onclick="addAdditionalPhoto('seg')" style="margin-top:6px;">+ Añadir foto</button>
+                </div>
+            </div>
+
+            <div class="button-group">
+
+                <button class="btn btn-primary" onclick="generarPDF('seg')">📄 Generar informe PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         4. AVERÍA
+    ══════════════════════════════════════════════════════ -->
+    <div id="sec-averia" class="form-section">
+        <div class="content">
+
+            <div class="section">
+                <h3>📋 Datos Generales</h3>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="required" for="av-fecha">Fecha</label>
+                        <input type="date" id="av-fecha">
+                    </div>
+                    <div class="form-group">
+                        <label for="av-hora">Hora</label>
+                        <input type="time" id="av-hora">
+                    </div>
+                    <div class="form-group">
+                        <label class="required" for="av-tecnicos">Técnicos que ejecutan el trabajo</label>
+                        <input type="text" id="av-tecnicos" placeholder="Nombre(s) del técnico/s">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="required" for="av-direccion">Dirección o coordenadas de avería</label>
+                    <input type="text" id="av-direccion" placeholder="Calle, número, municipio…">
+                </div>
+                <div class="form-group">
+                    <label for="av-descripcion">Descripción de la avería encontrada</label>
+                    <textarea id="av-descripcion" placeholder="Describe la avería encontrada…"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="av-resolucion">Comentarios sobre la resolución de la avería</label>
+                    <textarea id="av-resolucion" placeholder="Describe cómo se resolvió la avería…"></textarea>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>📷 Fotografías</h3>
+                <div class="foto-grid">
+                    <div class="foto-item">
+                        <label>Foto avería previa a reparación</label>
+                        <div class="foto-controls">
+                            <label class="btn-file" for="av-file-antes">📁 Seleccionar</label>
+                            <input class="hidden-file" type="file" id="av-file-antes" accept="image/*" onchange="previewImage(this,'av-prev-antes')">
+                            <label class="btn-camera" for="av-cam-antes">📷 Cámara</label>
+                            <input class="hidden-file" type="file" id="av-cam-antes" accept="image/*" capture="environment" onchange="previewImage(this,'av-prev-antes')">
+                        </div>
+                        <img id="av-prev-antes" class="photo-preview">
+                    </div>
+                    <div class="foto-item">
+                        <label>Foto avería resuelta</label>
+                        <div class="foto-controls">
+                            <label class="btn-file" for="av-file-despues">📁 Seleccionar</label>
+                            <input class="hidden-file" type="file" id="av-file-despues" accept="image/*" onchange="previewImage(this,'av-prev-despues')">
+                            <label class="btn-camera" for="av-cam-despues">📷 Cámara</label>
+                            <input class="hidden-file" type="file" id="av-cam-despues" accept="image/*" capture="environment" onchange="previewImage(this,'av-prev-despues')">
+                        </div>
+                        <img id="av-prev-despues" class="photo-preview">
+                    </div>
+                </div>
+
+                <div class="additional-photos" style="margin-top:20px;">
+                    <h3>📎 Fotos Complementarias</h3>
+                    <div id="av-additionalPhotos"></div>
+                    <button class="btn btn-secondary" onclick="addAdditionalPhoto('av')" style="margin-top:6px;">+ Añadir foto complementaria</button>
+                </div>
+            </div>
+
+            <div class="button-group">
+
+                <button class="btn btn-primary" onclick="generarPDF('av')">📄 Generar informe PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         3. TRABAJO GENERAL
+    ══════════════════════════════════════════════════════ -->
+    <div id="sec-general" class="form-section">
+        <div class="content">
+
+            <div class="section">
+                <h3>📋 Datos Generales</h3>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="required" for="gen-fecha">Fecha</label>
+                        <input type="date" id="gen-fecha">
+                    </div>
+                    <div class="form-group">
+                        <label for="gen-hora">Hora</label>
+                        <input type="time" id="gen-hora">
+                    </div>
+                    <div class="form-group">
+                        <label class="required" for="gen-tecnicos">Técnicos que ejecutan el trabajo</label>
+                        <input type="text" id="gen-tecnicos" placeholder="Nombre(s) del técnico/s">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="gen-comentarios">Comentarios sobre el trabajo ejecutado</label>
+                    <textarea id="gen-comentarios" placeholder="Describe el trabajo realizado…" style="min-height:120px;"></textarea>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>📷 Fotografías</h3>
+                <div class="additional-photos" style="margin-top:0;">
+                    <h3>📎 Añadir fotos del trabajo</h3>
+                    <div id="gen-additionalPhotos"></div>
+                    <button class="btn btn-secondary" onclick="addAdditionalPhoto('gen')" style="margin-top:6px;">+ Añadir foto</button>
+                </div>
+            </div>
+
+            <div class="button-group">
+
+                <button class="btn btn-primary" onclick="generarPDF('gen')">📄 Generar informe PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         4. CERTIFICACIÓN CTO
+    ══════════════════════════════════════════════════════ -->
+    <div id="sec-certificacion" class="form-section">
+        <div class="content">
+
+            <div class="section">
+                <h3>📋 Datos Generales</h3>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="required" for="cert-fecha">Fecha</label>
+                        <input type="date" id="cert-fecha">
+                    </div>
+                    <div class="form-group">
+                        <label for="cert-hora">Hora</label>
+                        <input type="time" id="cert-hora">
+                    </div>
+                    <div class="form-group">
+                        <label class="required" for="cert-tecnico">Técnicos que ejecutan el trabajo</label>
+                        <input type="text" id="cert-tecnico" placeholder="Nombre del técnico">
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="required" for="cert-codigoCTO">Código de CTO</label>
+                        <input type="text" id="cert-codigoCTO" placeholder="Ej: CTO-MAD-0001">
+                    </div>
+                    <div class="form-group">
+                        <label class="required" for="cert-direccionCTO">Dirección o coordenadas donde está la CTO</label>
+                        <input type="text" id="cert-direccionCTO" placeholder="Calle, número, municipio…">
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>🔌 Número de cables (Entrada + Salidas)</h3>
+                <div class="form-group">
+                    <label for="cert-numCables">Número total de cables</label>
+                    <select id="cert-numCables" onchange="renderCables()">
+                        <option value="">— Seleccionar —</option>
+                        <option value="1">1 (Entrada)</option>
+                        <option value="2">2 (Entrada + 1 Salida)</option>
+                        <option value="3">3 (Entrada + 2 Salidas)</option>
+                        <option value="4">4 (Entrada + 3 Salidas)</option>
+                        <option value="5">5 (Entrada + 4 Salidas)</option>
+                        <option value="6">6 (Entrada + 5 Salidas)</option>
+                        <option value="7">7 (Entrada + 6 Salidas)</option>
+                        <option value="8">8 (Entrada + 7 Salidas)</option>
+                        <option value="9">9 (Entrada + 8 Salidas)</option>
+                        <option value="10">10 (Entrada + 9 Salidas)</option>
+                    </select>
+                </div>
+                <div id="cert-cables-container"></div>
+            </div>
+
+            <div class="section">
+                <h3>🔀 Tipo de Splitter de CTO</h3>
+                <div class="form-group">
+                    <label for="cert-tipoSplitter">Tipo de splitter</label>
+                    <select id="cert-tipoSplitter" onchange="renderPuertos()">
+                        <option value="">— Seleccionar —</option>
+                        <option value="2">1x2</option>
+                        <option value="4">1x4</option>
+                        <option value="8">1x8</option>
+                        <option value="2x8">2x8</option>
+                        <option value="16">1x16</option>
+                    </select>
+                </div>
+                <div id="cert-puertos-container"></div>
+            </div>
+
+            <div class="section">
+                <h3>📷 Fotografías</h3>
+                <div class="foto-grid">
+                    <div class="foto-item">
+                        <label>Foto entorno</label>
+                        <div class="foto-controls">
+                            <label class="btn-file" for="cert-file-entorno">📁 Seleccionar</label>
+                            <input class="hidden-file" type="file" id="cert-file-entorno" accept="image/*" onchange="previewImage(this,'cert-prev-entorno')">
+                            <label class="btn-camera" for="cert-cam-entorno">📷 Cámara</label>
+                            <input class="hidden-file" type="file" id="cert-cam-entorno" accept="image/*" capture="environment" onchange="previewImage(this,'cert-prev-entorno')">
+                        </div>
+                        <img id="cert-prev-entorno" class="photo-preview">
+                    </div>
+                    <div class="foto-item">
+                        <label>Foto CTO abierta</label>
+                        <div class="foto-controls">
+                            <label class="btn-file" for="cert-file-cto-abierta">📁 Seleccionar</label>
+                            <input class="hidden-file" type="file" id="cert-file-cto-abierta" accept="image/*" onchange="previewImage(this,'cert-prev-cto-abierta')">
+                            <label class="btn-camera" for="cert-cam-cto-abierta">📷 Cámara</label>
+                            <input class="hidden-file" type="file" id="cert-cam-cto-abierta" accept="image/*" capture="environment" onchange="previewImage(this,'cert-prev-cto-abierta')">
+                        </div>
+                        <img id="cert-prev-cto-abierta" class="photo-preview">
+                    </div>
+                    <div class="foto-item">
+                        <label>Foto fusiones CTO</label>
+                        <div class="foto-controls">
+                            <label class="btn-file" for="cert-file-fusiones">📁 Seleccionar</label>
+                            <input class="hidden-file" type="file" id="cert-file-fusiones" accept="image/*" onchange="previewImage(this,'cert-prev-fusiones')">
+                            <label class="btn-camera" for="cert-cam-fusiones">📷 Cámara</label>
+                            <input class="hidden-file" type="file" id="cert-cam-fusiones" accept="image/*" capture="environment" onchange="previewImage(this,'cert-prev-fusiones')">
+                        </div>
+                        <img id="cert-prev-fusiones" class="photo-preview">
+                    </div>
+                    <div class="foto-item">
+                        <label>Foto etiquetado CTO</label>
+                        <div class="foto-controls">
+                            <label class="btn-file" for="cert-file-etiq-cto">📁 Seleccionar</label>
+                            <input class="hidden-file" type="file" id="cert-file-etiq-cto" accept="image/*" onchange="previewImage(this,'cert-prev-etiq-cto')">
+                            <label class="btn-camera" for="cert-cam-etiq-cto">📷 Cámara</label>
+                            <input class="hidden-file" type="file" id="cert-cam-etiq-cto" accept="image/*" capture="environment" onchange="previewImage(this,'cert-prev-etiq-cto')">
+                        </div>
+                        <img id="cert-prev-etiq-cto" class="photo-preview">
+                    </div>
+                    <div class="foto-item">
+                        <label>Foto etiquetado cables</label>
+                        <div class="foto-controls">
+                            <label class="btn-file" for="cert-file-etiq-cables">📁 Seleccionar</label>
+                            <input class="hidden-file" type="file" id="cert-file-etiq-cables" accept="image/*" onchange="previewImage(this,'cert-prev-etiq-cables')">
+                            <label class="btn-camera" for="cert-cam-etiq-cables">📷 Cámara</label>
+                            <input class="hidden-file" type="file" id="cert-cam-etiq-cables" accept="image/*" capture="environment" onchange="previewImage(this,'cert-prev-etiq-cables')">
+                        </div>
+                        <img id="cert-prev-etiq-cables" class="photo-preview">
+                    </div>
+                    <div class="foto-item">
+                        <label>Foto medida de potencia</label>
+                        <div class="foto-controls">
+                            <label class="btn-file" for="cert-file-potencia">📁 Seleccionar</label>
+                            <input class="hidden-file" type="file" id="cert-file-potencia" accept="image/*" onchange="previewImage(this,'cert-prev-potencia')">
+                            <label class="btn-camera" for="cert-cam-potencia">📷 Cámara</label>
+                            <input class="hidden-file" type="file" id="cert-cam-potencia" accept="image/*" capture="environment" onchange="previewImage(this,'cert-prev-potencia')">
+                        </div>
+                        <img id="cert-prev-potencia" class="photo-preview">
+                    </div>
+                    <div class="foto-item">
+                        <label>Foto clientes conectados</label>
+                        <div class="foto-controls">
+                            <label class="btn-file" for="cert-file-clientes">📁 Seleccionar</label>
+                            <input class="hidden-file" type="file" id="cert-file-clientes" accept="image/*" onchange="previewImage(this,'cert-prev-clientes')">
+                            <label class="btn-camera" for="cert-cam-clientes">📷 Cámara</label>
+                            <input class="hidden-file" type="file" id="cert-cam-clientes" accept="image/*" capture="environment" onchange="previewImage(this,'cert-prev-clientes')">
+                        </div>
+                        <img id="cert-prev-clientes" class="photo-preview">
+                    </div>
+                    <div class="foto-item">
+                        <label>Foto coordenadas</label>
+                        <div class="foto-controls">
+                            <label class="btn-file" for="cert-file-ubicacion">📁 Seleccionar</label>
+                            <input class="hidden-file" type="file" id="cert-file-ubicacion" accept="image/*" onchange="previewImage(this,'cert-prev-ubicacion')">
+                            <label class="btn-camera" for="cert-cam-ubicacion">📷 Cámara</label>
+                            <input class="hidden-file" type="file" id="cert-cam-ubicacion" accept="image/*" capture="environment" onchange="previewImage(this,'cert-prev-ubicacion')">
+                        </div>
+                        <img id="cert-prev-ubicacion" class="photo-preview">
+                    </div>
+                </div>
+
+                <div class="additional-photos" style="margin-top:20px;">
+                    <h3>📎 Fotos Complementarias</h3>
+                    <div id="cert-additionalPhotos"></div>
+                    <button class="btn btn-secondary" onclick="addAdditionalPhoto('cert')" style="margin-top:6px;">+ Añadir foto complementaria</button>
+                </div>
+            </div>
+
+            <div class="button-group">
+
+                <button class="btn btn-primary" onclick="generarPDF('cert')">📄 Generar informe PDF</button>
+            </div>
+        </div>
+    </div>
+
+</div><!-- /.container -->
+
+<script>
+// ─── CONSTANTES ──────────────────────────────────────────────────────────────
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzXbx2DQNqsTJlzZX7n9ofSNSkSKKwsPIX-e6VWhPIO6ZCnJLMCZ7oIeSBAQHEaXmsssg/exec';
+var LETRAS = ['A','B','C','D','E','F','G','H','I'];
+var MAX_PX = 1920, JPEG_Q = 0.72;
+
+// Contadores independientes de fotos adicionales por sección
+var addPhotoCounters = { ins: 0, wim: 0, seg: 0, av: 0, gen: 0, cert: 0 };
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+(function () {
+    var hoy  = todayStr();
+    var hora = horaStr();
+    ['ins','wim','seg','av','gen','cert'].forEach(function(p){
+        var fEl = document.getElementById(p + '-fecha');
+        if (fEl) fEl.value = hoy;
+        var hEl = document.getElementById(p + '-hora');
+        if (hEl) hEl.value = hora;
+    });
+})();
+
+function todayStr() {
+    var d = new Date(new Date().toLocaleString('en-US', {timeZone:'Europe/Madrid'}));
+    return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+}
+function horaStr() {
+    var d = new Date(new Date().toLocaleString('en-US', {timeZone:'Europe/Madrid'}));
+    return pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+function pad(n) { return String(n).padStart(2,'0'); }
+
+// ─── FOTOS CONDICIONALES TV ───────────────────────────────────────────────────
+function actualizarFotosTV(prefix) {
+    var val = document.getElementById(prefix + '-tv').value;
+    if (prefix === 'ins') {
+        var catv    = document.getElementById('ins-fotos-catv');
+        var stbIns  = document.getElementById('ins-fotos-stb-zapi');
+        catv.style.display   = (val === 'si-catv')     ? 'flex' : 'none';
+        catv.style.marginTop = (val === 'si-catv')     ? '12px' : '0';
+        stbIns.style.display = (val === 'si-stb-zapi') ? 'flex' : 'none';
+        stbIns.style.marginTop=(val === 'si-stb-zapi') ? '12px' : '0';
+    } else if (prefix === 'wim') {
+        var stbWim  = document.getElementById('wim-fotos-stb-zapi');
+        stbWim.style.display  = (val === 'si-stb-zapi') ? 'flex' : 'none';
+        stbWim.style.marginTop= (val === 'si-stb-zapi') ? '12px' : '0';
+    }
+}
+
+function actualizarFotosTelefono(prefix) {
+    var val = document.getElementById(prefix + '-telefono').value;
+    if (prefix === 'wim') {
+        var ata = document.getElementById('wim-fotos-telefono');
+        ata.style.display   = (val === 'si') ? 'flex' : 'none';
+        ata.style.marginTop = (val === 'si') ? '12px' : '0';
+    }
+}
+
+// ─── CAMBIAR SECCIÓN ─────────────────────────────────────────────────────────
+function cambiarSeccion() {
+    var val = document.getElementById('tipoTrabajo').value;
+    var map = { instalacion:'sec-instalacion', wimax:'sec-wimax', seguridad:'sec-seguridad', averia:'sec-averia', general:'sec-general', certificacion:'sec-certificacion' };
+    document.querySelectorAll('.form-section').forEach(function(s){ s.classList.remove('active'); });
+    if (val && map[val]) document.getElementById(map[val]).classList.add('active');
+}
+
+// ─── TOAST ───────────────────────────────────────────────────────────────────
+function toast(msg, tipo, ms) {
+    tipo = tipo || 'info'; ms = ms || 3000;
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'show ' + tipo;
+    clearTimeout(el._t);
+    el._t = setTimeout(function(){ el.className = ''; }, ms);
+}
+
+// ─── PREVIEW FOTO ────────────────────────────────────────────────────────────
+function previewImage(input, id) {
+    var img = document.getElementById(id);
+    if (!img) return;
+    if (input.files && input.files[0]) {
+        var r = new FileReader();
+        r.onload = function(e) {
+            var orig = new Image();
+            orig.onload = function() {
+                var w = orig.width, h = orig.height;
+                if (w > MAX_PX || h > MAX_PX) {
+                    if (w >= h) { h = Math.round(h * MAX_PX / w); w = MAX_PX; }
+                    else        { w = Math.round(w * MAX_PX / h); h = MAX_PX; }
+                }
+                var cv = document.createElement('canvas');
+                cv.width = w; cv.height = h;
+                cv.getContext('2d').drawImage(orig, 0, 0, w, h);
+                img.src = cv.toDataURL('image/jpeg', JPEG_Q);
+                img.style.display = 'block';
+            };
+            orig.src = e.target.result;
+        };
+        r.readAsDataURL(input.files[0]);
+    } else { img.src = ''; img.style.display = 'none'; }
+}
+
+// ─── FOTOS ADICIONALES ───────────────────────────────────────────────────────
+function addAdditionalPhoto(prefix) {
+    addPhotoCounters[prefix]++;
+    var n = addPhotoCounters[prefix];
+    var uid = prefix + '_' + n;
+    var div = document.createElement('div');
+    div.className = 'additional-photo-item';
+    div.id = 'addItem_' + uid;
+    div.innerHTML =
+        '<div class="additional-photo-header">' +
+            '<strong style="font-size:14px;">Foto complementaria ' + n + '</strong>' +
+            '<button class="btn btn-danger" onclick="removeAdditionalPhoto(\'' + uid + '\')">✕ Eliminar</button>' +
+        '</div>' +
+        '<div class="form-group">' +
+            '<label style="font-size:13px;">Descripción</label>' +
+            '<input type="text" id="addPhoto_' + uid + '_desc" placeholder="Descripción de la foto">' +
+        '</div>' +
+        '<div class="foto-controls" style="margin-bottom:10px;">' +
+            '<label class="btn-file" for="addFile_' + uid + '">📁 Seleccionar</label>' +
+            '<input class="hidden-file" type="file" id="addFile_' + uid + '" accept="image/*" onchange="previewImage(this,\'addPhoto_' + uid + '_prev\')">' +
+            '<label class="btn-camera" for="addCam_' + uid + '">📷 Cámara</label>' +
+            '<input class="hidden-file" type="file" id="addCam_' + uid + '" accept="image/*" capture="environment" onchange="previewImage(this,\'addPhoto_' + uid + '_prev\')">' +
+        '</div>' +
+        '<img id="addPhoto_' + uid + '_prev" class="photo-preview" style="width:100%;height:140px;">';
+    document.getElementById(prefix + '-additionalPhotos').appendChild(div);
+}
+
+function removeAdditionalPhoto(uid) {
+    var el = document.getElementById('addItem_' + uid);
+    if (el) el.remove();
+}
+
+// Recoge fotos adicionales de una sección
+function getAdditionalPhotos(prefix) {
+    var fotos = [];
+    var container = document.getElementById(prefix + '-additionalPhotos');
+    if (!container) return fotos;
+    container.querySelectorAll('.additional-photo-item').forEach(function(item) {
+        var uid = item.id.replace('addItem_', '');
+        var img  = document.getElementById('addPhoto_' + uid + '_prev');
+        var desc = document.getElementById('addPhoto_' + uid + '_desc');
+        var lbl  = desc ? (desc.value || 'Foto complementaria') : 'Foto complementaria';
+        if (img && img.src && img.src.length > 50) fotos.push({ label: lbl, src: img.src });
+    });
+    return fotos;
+}
+
+// ─── CABLES (Certificación) ───────────────────────────────────────────────────
+function renderCables() {
+    var n = parseInt(document.getElementById('cert-numCables').value) || 0;
+    var c = document.getElementById('cert-cables-container');
+    c.innerHTML = '';
+    if (!n) return;
+    c.appendChild(cableRow('⬇️ Entrada', 'cert-cable-entrada', 'entrada'));
+    for (var i = 0; i < n - 1; i++)
+        c.appendChild(cableRow('⬆️ Salida ' + LETRAS[i], 'cert-cable-salida-' + LETRAS[i], 'salida'));
+}
+
+function cableRow(titulo, id, tipo) {
+    var div = document.createElement('div');
+    div.className = 'cable-row ' + tipo;
+    div.innerHTML = '<span class="cable-badge">' + titulo + '</span>' +
+        '<input type="text" id="' + id + '" placeholder="Identificación / Etiqueta">';
+    return div;
+}
+
+// ─── PUERTOS (Certificación) ──────────────────────────────────────────────────
+function renderPuertos() {
+    var raw = document.getElementById('cert-tipoSplitter').value;
+    var n = raw === '2x8' ? 16 : (parseInt(raw) || 0);
+    var c = document.getElementById('cert-puertos-container');
+    c.innerHTML = '';
+    if (!n) return;
+    for (var i = 1; i <= n; i++) {
+        var div = document.createElement('div');
+        div.className = 'puerto-item';
+        div.innerHTML = '<div class="puerto-label">Puerto ' + i + '</div>' +
+            '<input type="text" id="cert-puerto-' + i + '" placeholder="Dirección cliente / Vacío">';
+        c.appendChild(div);
+    }
+}
+
+// ─── LIMPIAR ──────────────────────────────────────────────────────────────────
+function limpiarFormulario(prefix) {
+
+    var secMap = { ins:'instalacion', wim:'wimax', seg:'seguridad', av:'averia', gen:'general', cert:'certificacion' };
+    var secId = secMap[prefix] || prefix;
+    var sec = document.getElementById('sec-' + secId);
+    if (!sec) { toast('Error: sección no encontrada', 'error'); return; }
+
+
+    sec.querySelectorAll('input[type="text"]').forEach(function(el){ el.value = ''; });
+    sec.querySelectorAll('textarea').forEach(function(el){ el.value = ''; });
+
+
+    sec.querySelectorAll('input[type="file"]').forEach(function(el){ el.value = ''; });
+
+    // Resetear todos los select a la primera opción (índice 0)
+    sec.querySelectorAll('select').forEach(function(el){ el.selectedIndex = 0; });
+
+    // Restaurar la fecha al día de hoy
+    var fechaEl = document.getElementById(prefix + '-fecha');
+    if (fechaEl) fechaEl.value = todayStr();
+
+    // Vaciar contenedores dinámicos de certificación
+    if (prefix === 'cert') {
+        var numCablesEl = document.getElementById('cert-numCables');
+        var splitterEl  = document.getElementById('cert-tipoSplitter');
+        if (numCablesEl) numCablesEl.selectedIndex = 0;
+        if (splitterEl)  splitterEl.selectedIndex  = 0;
+        var cablesC  = document.getElementById('cert-cables-container');
+        var puertosC = document.getElementById('cert-puertos-container');
+        if (cablesC)  cablesC.innerHTML  = '';
+        if (puertosC) puertosC.innerHTML = '';
+    }
+
+    // Vaciar fotos adicionales
+    var addCont = document.getElementById(prefix + '-additionalPhotos');
+    if (addCont) addCont.innerHTML = '';
+    addPhotoCounters[prefix] = 0;
+
+    // Ocultar y vaciar todas las previews de imagen
+    sec.querySelectorAll('.photo-preview').forEach(function(img){
+        img.src = '';
+        img.style.display = 'none';
+    });
+
+    toast('Formulario limpiado', 'info');
+}
+
+// ─── FUNCIONES PDF (helper) ───────────────────────────────────────────────────
+var PURPLE = [102, 126, 234], DARK = [50, 50, 60], GRAY = [120, 120, 130], LIGHT = [245, 245, 250];
+
+function pdfHeaderBanner(pdf, pageW, margin, titulo, fecha) {
+    pdf.setFillColor(PURPLE[0], PURPLE[1], PURPLE[2]);
+    pdf.rect(0, 0, pageW, 22, 'F');
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(14); pdf.setFont(undefined, 'bold');
+    pdf.text(titulo, pageW / 2, 13, { align: 'center' });
+    pdf.setFontSize(8); pdf.setFont(undefined, 'normal');
+    pdf.text('Fecha: ' + (fecha || ''), pageW - margin, 18, { align: 'right' });
+}
+
+function pdfSectionTitle(pdf, txt, y, margin, col, pageH) {
+    if (y + 14 > pageH - margin) { pdf.addPage(); y = margin; }
+    pdf.setFillColor(LIGHT[0], LIGHT[1], LIGHT[2]);
+    pdf.roundedRect(margin, y, col, 9, 2, 2, 'F');
+    pdf.setFontSize(10); pdf.setFont(undefined, 'bold');
+    pdf.setTextColor(PURPLE[0], PURPLE[1], PURPLE[2]);
+    pdf.text(txt, margin + 3, y + 6);
+    pdf.setTextColor(DARK[0], DARK[1], DARK[2]);
+    return y + 13;
+}
+
+function pdfField(pdf, lbl, val, y, margin, col, pageH) {
+    if (y + 12 > pageH - margin) { pdf.addPage(); y = margin; }
+    pdf.setFontSize(9); pdf.setFont(undefined, 'bold');
+    pdf.setTextColor(GRAY[0], GRAY[1], GRAY[2]);
+    pdf.text(lbl, margin, y);
+    pdf.setFont(undefined, 'normal'); pdf.setTextColor(DARK[0], DARK[1], DARK[2]);
+    var lines = pdf.splitTextToSize(val || '—', col);
+    if (y + 5 + lines.length * 5 + 3 > pageH - margin) { pdf.addPage(); y = margin; }
+    pdf.text(lines, margin, y + 5);
+    return y + 5 + lines.length * 5 + 3;
+}
+
+function pdfFieldPair(pdf, l1, v1, l2, v2, y, margin, col, pageH) {
+    if (y + 14 > pageH - margin) { pdf.addPage(); y = margin; }
+    var half = col / 2 - 4;
+    pdf.setFontSize(9); pdf.setFont(undefined, 'bold');
+    pdf.setTextColor(GRAY[0], GRAY[1], GRAY[2]);
+    pdf.text(l1, margin, y); pdf.text(l2, margin + half + 8, y);
+    pdf.setFont(undefined, 'normal'); pdf.setTextColor(DARK[0], DARK[1], DARK[2]);
+    pdf.text(v1 || '—', margin, y + 5);
+    pdf.text((v2 || '—').substring(0, 45), margin + half + 8, y + 5);
+    return y + 14;
+}
+
+async function pdfAddPhotoPage(pdf, pageW, pageH, margin, tituloDoc, labelFoto, src) {
+    pdf.addPage();
+    pdf.setFillColor(PURPLE[0], PURPLE[1], PURPLE[2]);
+    pdf.rect(0, 0, pageW, 12, 'F');
+    pdf.setTextColor(255, 255, 255); pdf.setFontSize(9); pdf.setFont(undefined, 'bold');
+    pdf.text(tituloDoc, margin, 8);
+    pdf.setTextColor(DARK[0], DARK[1], DARK[2]); pdf.setFontSize(12); pdf.setFont(undefined, 'bold');
+    pdf.text(labelFoto, pageW / 2, 22, { align: 'center' });
+    var tmp = new Image();
+    await new Promise(function(res){ tmp.onload = res; tmp.src = src; });
+    var maxW = pageW - 2 * margin, maxH = pageH - 38, fw, fh;
+    if (tmp.width / tmp.height > maxW / maxH) { fw = maxW; fh = maxW * tmp.height / tmp.width; }
+    else { fh = maxH; fw = maxH * tmp.width / tmp.height; }
+    pdf.addImage(src, 'JPEG', (pageW - fw) / 2, 26, fw, fh, '', 'FAST');
+}
+
+function getImgSrc(id) {
+    var el = document.getElementById(id);
+    return (el && el.src && el.src.length > 50) ? el.src : null;
+}
+
+// ─── GENERAR PDF ─────────────────────────────────────────────────────────────
+async function generarPDF(prefix) {
+    var jsPDF = window.jspdf.jsPDF;
+    var pdf   = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    var pageW = pdf.internal.pageSize.getWidth();
+    var pageH = pdf.internal.pageSize.getHeight();
+    var margin = 15, col = pageW - 2 * margin;
+    var y = margin;
+
+    if (prefix === 'ins') {
+        var fecha    = document.getElementById('ins-fecha').value;
+        var hora     = document.getElementById('ins-hora').value;
+        var tecnicos = document.getElementById('ins-tecnicos').value;
+        var dir      = document.getElementById('ins-direccion').value;
+        var metros   = document.getElementById('ins-metros').value;
+        var codCTO   = document.getElementById('ins-codigoCTO').value;
+        var puertoCTO= document.getElementById('ins-puertoCTO').value;
+        var coments  = document.getElementById('ins-comentarios').value;
+        var tvSel    = document.getElementById('ins-tv');
+        var tvLabel  = tvSel.options[tvSel.selectedIndex] ? tvSel.options[tvSel.selectedIndex].text : '';
+        var telSel   = document.getElementById('ins-telefono');
+        var telLabel = telSel.options[telSel.selectedIndex] ? telSel.options[telSel.selectedIndex].text : '';
+        var titulo   = 'Instalación de Fibra Óptica Televalentin';
+        var filename = 'Instalacion Fibra Optica ' + fecha + ' ' + (hora||'').replace(':','-') + '.pdf';
+
+        pdfHeaderBanner(pdf, pageW, margin, titulo, fecha + ' ' + hora);
+        y = 30;
+
+        y = pdfSectionTitle(pdf, 'Datos Generales', y, margin, col, pageH);
+        y = pdfFieldPair(pdf, 'Fecha', fecha, 'Hora', hora, y, margin, col, pageH);
+        y = pdfField(pdf, 'Técnicos', tecnicos, y, margin, col, pageH);
+        y = pdfField(pdf, 'Dirección de instalación', dir, y, margin, col, pageH);
+        y = pdfFieldPair(pdf, 'Metros de acometida', metros, 'Código CTO', codCTO, y, margin, col, pageH);
+        y = pdfField(pdf, 'Puerto de CTO', puertoCTO, y, margin, col, pageH);
+        y = pdfFieldPair(pdf, 'Instalación de televisión', tvLabel, 'Instalación de teléfono', telLabel, y, margin, col, pageH);
+        if (coments) y = pdfField(pdf, 'Comentarios', coments, y, margin, col, pageH);
+
+        var fotosDefs = [
+            { label: 'Foto etiqueta CTO',          id: 'ins-prev-etiq-cto' },
+            { label: 'Foto medición puerto CTO',   id: 'ins-prev-med-cto' },
+            { label: 'Foto cliente marcado en CTO',id: 'ins-prev-cli-cto' },
+            { label: 'Foto fusión roseta abierta', id: 'ins-prev-fusion' },
+            { label: 'Foto ubicación roseta',      id: 'ins-prev-ubic-roseta' },
+            { label: 'Foto medición roseta',       id: 'ins-prev-med-roseta' },
+            { label: 'Foto ubicación ONT',         id: 'ins-prev-ubic-ont' },
+            { label: 'Foto puertos ONT',           id: 'ins-prev-ont-puertos' },
+            { label: 'Foto etiqueta ONT',          id: 'ins-prev-ont-etiq' }
+        ];
+        var fotos = [];
+        fotosDefs.forEach(function(d){ var s = getImgSrc(d.id); if (s) fotos.push({ label: d.label, src: s }); });
+        // Fotos condicionales TV
+        var insTvVal = document.getElementById('ins-tv').value;
+        if (insTvVal === 'si-catv') {
+            var sc1 = getImgSrc('ins-prev-conv-catv');   if (sc1) fotos.push({ label: 'Foto conversor CATV', src: sc1 });
+            var sc2 = getImgSrc('ins-prev-etiq-catv');   if (sc2) fotos.push({ label: 'Foto etiqueta conversor CATV', src: sc2 });
+        } else if (insTvVal === 'si-stb-zapi') {
+            var sz1 = getImgSrc('ins-prev-stb-zapi');      if (sz1) fotos.push({ label: 'Foto STB Zapi', src: sz1 });
+            var sz2 = getImgSrc('ins-prev-etiq-stb-zapi'); if (sz2) fotos.push({ label: 'Foto etiqueta STB Zapi', src: sz2 });
+        }
+        getAdditionalPhotos('ins').forEach(function(f){ fotos.push(f); });
+        for (var i = 0; i < fotos.length; i++) await pdfAddPhotoPage(pdf, pageW, pageH, margin, titulo, fotos[i].label, fotos[i].src);
+
+        pdf.save(filename);
+        toast('✔ PDF generado', 'success', 3000);
+
+    } else if (prefix === 'wim') {
+        var fecha    = document.getElementById('wim-fecha').value;
+        var hora     = document.getElementById('wim-hora').value;
+        var tecnicos = document.getElementById('wim-tecnicos').value;
+        var dir      = document.getElementById('wim-direccion').value;
+        var metros   = document.getElementById('wim-metros').value;
+        var wimTvSel  = document.getElementById('wim-tv');
+        var wimTvLabel= wimTvSel.options[wimTvSel.selectedIndex] ? wimTvSel.options[wimTvSel.selectedIndex].text : '';
+        var wimTelSel = document.getElementById('wim-telefono');
+        var wimTelLabel= wimTelSel.options[wimTelSel.selectedIndex] ? wimTelSel.options[wimTelSel.selectedIndex].text : '';
+        var coments  = document.getElementById('wim-comentarios').value;
+        var titulo   = 'Instalación WIMAX Televalentin';
+        var filename = 'Instalacion WIMAX ' + fecha + ' ' + (hora||'').replace(':','-') + '.pdf';
+
+        pdfHeaderBanner(pdf, pageW, margin, titulo, fecha + ' ' + hora);
+        y = 30;
+
+        y = pdfSectionTitle(pdf, 'Datos Generales', y, margin, col, pageH);
+        y = pdfFieldPair(pdf, 'Fecha', fecha, 'Hora', hora, y, margin, col, pageH);
+        y = pdfField(pdf, 'Técnicos', tecnicos, y, margin, col, pageH);
+        y = pdfField(pdf, 'Dirección o coordenadas de instalación', dir, y, margin, col, pageH);
+        y = pdfField(pdf, 'Metros de cable RJ45', metros, y, margin, col, pageH);
+        y = pdfFieldPair(pdf, 'Instalación de televisión', wimTvLabel, 'Instalación de teléfono', wimTelLabel, y, margin, col, pageH);
+        if (coments) y = pdfField(pdf, 'Comentarios', coments, y, margin, col, pageH);
+
+        var wimFotos = [
+            { label: 'Foto antena instalada',  id: 'wim-prev-antena' },
+            { label: 'Foto ubicación router',  id: 'wim-prev-ubic-router' },
+            { label: 'Foto puertos router',    id: 'wim-prev-puertos-router' },
+            { label: 'Foto etiqueta router',   id: 'wim-prev-etiq-router' }
+        ];
+        var fotos = [];
+        wimFotos.forEach(function(d){ var s = getImgSrc(d.id); if (s) fotos.push({ label: d.label, src: s }); });
+        // Fotos condicionales TV
+        if (document.getElementById('wim-tv').value === 'si-stb-zapi') {
+            var wz1 = getImgSrc('wim-prev-stb-zapi');      if (wz1) fotos.push({ label: 'Foto STB Zapi', src: wz1 });
+            var wz2 = getImgSrc('wim-prev-etiq-stb-zapi'); if (wz2) fotos.push({ label: 'Foto etiqueta STB Zapi', src: wz2 });
+        }
+        // Fotos condicionales Teléfono
+        if (document.getElementById('wim-telefono').value === 'si') {
+            var wa1 = getImgSrc('wim-prev-ata');      if (wa1) fotos.push({ label: 'Foto ATA telefonía', src: wa1 });
+            var wa2 = getImgSrc('wim-prev-etiq-ata'); if (wa2) fotos.push({ label: 'Foto etiqueta ATA telefonía', src: wa2 });
+        }
+        getAdditionalPhotos('wim').forEach(function(f){ fotos.push(f); });
+        for (var i = 0; i < fotos.length; i++) await pdfAddPhotoPage(pdf, pageW, pageH, margin, titulo, fotos[i].label, fotos[i].src);
+
+        pdf.save(filename);
+        toast('✔ PDF generado', 'success', 3000);
+
+    } else if (prefix === 'seg') {
+        var fecha    = document.getElementById('seg-fecha').value;
+        var hora     = document.getElementById('seg-hora').value;
+        var tecnicos = document.getElementById('seg-tecnicos').value;
+        var dir      = document.getElementById('seg-direccion').value;
+        var metros   = document.getElementById('seg-metros').value;
+        var tipoSel  = document.getElementById('seg-tipo');
+        var tipoLabel= tipoSel.options[tipoSel.selectedIndex] ? tipoSel.options[tipoSel.selectedIndex].text : '';
+        var coments  = document.getElementById('seg-comentarios').value;
+        var titulo   = 'Instalación de Seguridad Televalentin';
+        var filename = 'Instalacion Seguridad ' + fecha + ' ' + (hora||'').replace(':','-') + '.pdf';
+
+        pdfHeaderBanner(pdf, pageW, margin, titulo, fecha + ' ' + hora);
+        y = 30;
+
+        y = pdfSectionTitle(pdf, 'Datos Generales', y, margin, col, pageH);
+        y = pdfFieldPair(pdf, 'Fecha', fecha, 'Hora', hora, y, margin, col, pageH);
+        y = pdfField(pdf, 'Técnicos', tecnicos, y, margin, col, pageH);
+        y = pdfField(pdf, 'Dirección o coordenadas de instalación', dir, y, margin, col, pageH);
+        y = pdfFieldPair(pdf, 'Metros de cable RJ45', metros, 'Tipo de instalación', tipoLabel, y, margin, col, pageH);
+        if (coments) y = pdfField(pdf, 'Comentarios', coments, y, margin, col, pageH);
+
+        var fotos = getAdditionalPhotos('seg');
+        for (var i = 0; i < fotos.length; i++) await pdfAddPhotoPage(pdf, pageW, pageH, margin, titulo, fotos[i].label, fotos[i].src);
+
+        pdf.save(filename);
+        toast('✔ PDF generado', 'success', 3000);
+
+    } else if (prefix === 'av') {
+        var fecha    = document.getElementById('av-fecha').value;
+        var hora     = document.getElementById('av-hora').value;
+        var tecnicos = document.getElementById('av-tecnicos').value;
+        var dir      = document.getElementById('av-direccion').value;
+        var desc     = document.getElementById('av-descripcion').value;
+        var resol    = document.getElementById('av-resolucion').value;
+        var titulo   = 'Avería Televalentin';
+        var filename = 'Averia ' + fecha + ' ' + (hora||'').replace(':','-') + '.pdf';
+
+        pdfHeaderBanner(pdf, pageW, margin, titulo, fecha + ' ' + hora);
+        y = 30;
+
+        y = pdfSectionTitle(pdf, 'Datos Generales', y, margin, col, pageH);
+        y = pdfFieldPair(pdf, 'Fecha', fecha, 'Hora', hora, y, margin, col, pageH);
+        y = pdfField(pdf, 'Técnicos', tecnicos, y, margin, col, pageH);
+        y = pdfField(pdf, 'Dirección o coordenadas de avería', dir, y, margin, col, pageH);
+        y = pdfField(pdf, 'Descripción de la avería', desc, y, margin, col, pageH);
+        y = pdfField(pdf, 'Resolución de la avería', resol, y, margin, col, pageH);
+
+        var fotos = [];
+        var s1 = getImgSrc('av-prev-antes');   if (s1) fotos.push({ label: 'Foto avería previa a reparación', src: s1 });
+        var s2 = getImgSrc('av-prev-despues'); if (s2) fotos.push({ label: 'Foto avería resuelta', src: s2 });
+        getAdditionalPhotos('av').forEach(function(f){ fotos.push(f); });
+        for (var i = 0; i < fotos.length; i++) await pdfAddPhotoPage(pdf, pageW, pageH, margin, titulo, fotos[i].label, fotos[i].src);
+
+        pdf.save(filename);
+        toast('✔ PDF generado', 'success', 3000);
+
+    } else if (prefix === 'gen') {
+        var fecha    = document.getElementById('gen-fecha').value;
+        var hora     = document.getElementById('gen-hora').value;
+        var tecnicos = document.getElementById('gen-tecnicos').value;
+        var coments  = document.getElementById('gen-comentarios').value;
+        var titulo   = 'Trabajo General Televalentin';
+        var filename = 'Trabajo General ' + fecha + ' ' + (hora||'').replace(':','-') + '.pdf';
+
+        pdfHeaderBanner(pdf, pageW, margin, titulo, fecha + ' ' + hora);
+        y = 30;
+
+        y = pdfSectionTitle(pdf, 'Datos Generales', y, margin, col, pageH);
+        y = pdfFieldPair(pdf, 'Fecha', fecha, 'Hora', hora, y, margin, col, pageH);
+        y = pdfField(pdf, 'Técnicos', tecnicos, y, margin, col, pageH);
+        if (coments) y = pdfField(pdf, 'Comentarios sobre el trabajo', coments, y, margin, col, pageH);
+
+        var fotos = getAdditionalPhotos('gen');
+        for (var i = 0; i < fotos.length; i++) await pdfAddPhotoPage(pdf, pageW, pageH, margin, titulo, fotos[i].label, fotos[i].src);
+
+        pdf.save(filename);
+        toast('✔ PDF generado', 'success', 3000);
+
+    } else if (prefix === 'cert') {
+        // Recoger datos certificación
+        var fecha       = document.getElementById('cert-fecha').value;
+        var hora        = document.getElementById('cert-hora').value;
+        var tecnico     = document.getElementById('cert-tecnico').value;
+        var codigoCTO   = document.getElementById('cert-codigoCTO').value;
+        var direccionCTO= document.getElementById('cert-direccionCTO').value;
+        var numCables   = parseInt(document.getElementById('cert-numCables').value) || 0;
+        var rawSplitter = document.getElementById('cert-tipoSplitter').value;
+        var numPuertos  = rawSplitter === '2x8' ? 16 : (parseInt(rawSplitter) || 0);
+        var sel         = document.getElementById('cert-tipoSplitter');
+        var splitterLabel = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : '';
+        var titulo      = 'Certificación CTO Televalentin';
+        var filename    = 'Certificacion ' + (codigoCTO || 'CTO') + ' ' + fecha + ' ' + (hora||'').replace(':','-') + '.pdf';
+
+        var cables = {};
+        if (numCables) {
+            var entEl = document.getElementById('cert-cable-entrada');
+            cables['Entrada'] = entEl ? (entEl.value || '') : '';
+            for (var i = 0; i < numCables - 1; i++) {
+                var l = LETRAS[i];
+                var el = document.getElementById('cert-cable-salida-' + l);
+                cables['Salida ' + l] = el ? (el.value || '') : '';
+            }
+        }
+        var puertos = {};
+        for (var i = 1; i <= numPuertos; i++) {
+            var el = document.getElementById('cert-puerto-' + i);
+            puertos['Puerto ' + i] = el ? (el.value || '') : '';
+        }
+
+        pdfHeaderBanner(pdf, pageW, margin, titulo, fecha + ' ' + hora);
+        y = 30;
+
+        y = pdfSectionTitle(pdf, 'Datos Generales', y, margin, col, pageH);
+        y = pdfFieldPair(pdf, 'Fecha', fecha, 'Hora', hora, y, margin, col, pageH);
+        y = pdfFieldPair(pdf, 'Técnicos', tecnico, 'Código CTO', codigoCTO, y, margin, col, pageH);
+        y = pdfField(pdf, 'Dirección CTO', direccionCTO, y, margin, col, pageH);
+
+        var cableKeys = Object.keys(cables);
+        if (cableKeys.length) {
+            y = pdfSectionTitle(pdf, 'Cables (' + numCables + ' en total)', y, margin, col, pageH);
+            cableKeys.forEach(function(k){ y = pdfField(pdf, k, cables[k], y, margin, col, pageH); });
+        }
+
+        var puertoKeys = Object.keys(puertos);
+        if (puertoKeys.length) {
+            y = pdfSectionTitle(pdf, 'Splitter ' + splitterLabel + ' — Puertos', y, margin, col, pageH);
+            var cols3 = 3, pw = (col - (cols3 - 1) * 4) / cols3, px = margin;
+            puertoKeys.forEach(function(k, i) {
+                if (i % cols3 === 0) { if (i > 0) y += 14; if (y + 14 > pageH - margin) { pdf.addPage(); y = margin; } px = margin; }
+                pdf.setFontSize(8); pdf.setFont(undefined, 'bold'); pdf.setTextColor(GRAY[0], GRAY[1], GRAY[2]);
+                pdf.text(k, px, y);
+                pdf.setFont(undefined, 'normal'); pdf.setTextColor(DARK[0], DARK[1], DARK[2]);
+                pdf.text((puertos[k] || '—').substring(0, 28), px, y + 5);
+                px += pw + 4;
+            });
+            y += 14;
+        }
+
+        var certFotosDefs = [
+            { label: 'Foto Entorno',             id: 'cert-prev-entorno' },
+            { label: 'Foto CTO Abierta',         id: 'cert-prev-cto-abierta' },
+            { label: 'Foto Fusiones CTO',        id: 'cert-prev-fusiones' },
+            { label: 'Foto Etiquetado CTO',      id: 'cert-prev-etiq-cto' },
+            { label: 'Foto Etiquetado Cables',   id: 'cert-prev-etiq-cables' },
+            { label: 'Foto Medida de Potencia',  id: 'cert-prev-potencia' },
+            { label: 'Foto Clientes Conectados', id: 'cert-prev-clientes' },
+            { label: 'Foto Ubicación',           id: 'cert-prev-ubicacion' }
+        ];
+        var fotos = [];
+        certFotosDefs.forEach(function(d){ var s = getImgSrc(d.id); if (s) fotos.push({ label: d.label, src: s }); });
+        getAdditionalPhotos('cert').forEach(function(f){ fotos.push(f); });
+        for (var i = 0; i < fotos.length; i++) await pdfAddPhotoPage(pdf, pageW, pageH, margin, titulo, fotos[i].label, fotos[i].src);
+
+        pdf.save(filename);
+
+        // Enviar a Sheets
+        await enviarSheets(fecha, tecnico, codigoCTO, direccionCTO, numCables, splitterLabel, cables, puertos);
+        toast('✔ PDF generado y datos enviados', 'success', 4000);
+    }
+}
+
+// ─── ENVIAR A GOOGLE SHEETS (Certificación) ───────────────────────────────────
+async function enviarSheets(fecha, tecnico, codigoCTO, direccionCTO, numCables, splitterLabel, cables, puertos) {
+    var CABLE_COLS  = ['Entrada','Salida A','Salida B','Salida C','Salida D','Salida E','Salida F','Salida G','Salida H','Salida I'];
+    var PUERTO_COLS = ['Puerto 1','Puerto 2','Puerto 3','Puerto 4','Puerto 5','Puerto 6','Puerto 7','Puerto 8','Puerto 9','Puerto 10','Puerto 11','Puerto 12','Puerto 13','Puerto 14','Puerto 15','Puerto 16'];
+    var headers = ['Fecha','Técnico','Código CTO','Dirección CTO','Nº Cables','Splitter'].concat(CABLE_COLS).concat(PUERTO_COLS);
+    var values  = [fecha, tecnico, codigoCTO, direccionCTO, numCables || '', splitterLabel];
+    CABLE_COLS.forEach(function(k){  values.push(cables[k]  || ''); });
+    PUERTO_COLS.forEach(function(k){ values.push(puertos[k] || ''); });
+    try {
+        await fetch(APPS_SCRIPT_URL, {
+            method: 'POST', mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ headers: headers, values: values })
+        });
+    } catch (err) {
+        toast('✘ Error al enviar a Sheets: ' + err.message, 'error', 6000);
+    }
+}
+</script>
+</body>
+</html>
